@@ -1,0 +1,35 @@
+# Core dependencies
+numpy>=1.24.0
+pandas>=2.0.0
+Pillow>=10.0.0
+opencv-python>=4.8.0
+requests>=2.31.0
+
+# Database
+psycopg2-binary>=2.9.7
+sqlalchemy>=2.0.0
+
+# Machine Learning
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+timm>=0.9.0
+
+# Visualization and Analysis
+matplotlib>=3.7.0
+seaborn>=0.12.0
+jupyter>=1.0.0
+ipykernel>=6.25.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+
+# Model specific
+segment-anything>=1.0
+# Note: SAM and DINOv2 models will be loaded via torch hub or transformers
+
+# Development and testing
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.0.0
