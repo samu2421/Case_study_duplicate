@@ -1,0 +1,172 @@
+{
+  "timestamp": "/Users/samikshadhere/MSc ADSA/2nd Semester/Case Study I/Final project/Generative-AI-Based-Virtual-Glasses-Try-On",
+  "tests": {
+    "python_version": {
+      "passed": true,
+      "details": "Python 3.10.18"
+    },
+    "dependency_NumPy - Numerical computing": {
+      "passed": true,
+      "details": "v2.2.6"
+    },
+    "dependency_Pandas - Data manipulation": {
+      "passed": true,
+      "details": "v2.3.0"
+    },
+    "dependency_OpenCV - Computer vision": {
+      "passed": true,
+      "details": "v4.11.0"
+    },
+    "dependency_Pillow - Image processing": {
+      "passed": true,
+      "details": "v11.2.1"
+    },
+    "dependency_PyTorch - Deep learning": {
+      "passed": true,
+      "details": "v2.7.1"
+    },
+    "dependency_TorchVision - Computer vision": {
+      "passed": true,
+      "details": "v0.22.1"
+    },
+    "dependency_Requests - HTTP library": {
+      "passed": true,
+      "details": "v2.32.4"
+    },
+    "dependency_SQLAlchemy - Database ORM": {
+      "passed": true,
+      "details": "v2.0.41"
+    },
+    "dependency_psycopg2 - PostgreSQL adapter": {
+      "passed": true,
+      "details": "v2.9.10 (dt dec pq3 ext lo64)"
+    },
+    "dependency_Matplotlib - Plotting": {
+      "passed": true,
+      "details": "v3.10.3"
+    },
+    "dependency_tqdm - Progress bars": {
+      "passed": true,
+      "details": "v4.67.1"
+    },
+    "dependency_python-dotenv - Environment variables": {
+      "passed": true,
+      "details": "vUnknown"
+    },
+    "file_config/database_config.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/utils/path_utils.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/utils/image_utils.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/utils/glasses_dataset_analyzer.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/download/google_drive_downloader.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/preprocess/preprocess_selfies.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_image_processing/preprocess/preprocess_glasses.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_models/hybrid_model.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_models/data_loaders.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_scripts/run_pipeline.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_scripts/train_model.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_demo/demo_tryon.py": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_requirements.txt": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "file_.env.template": {
+      "passed": true,
+      "details": "File exists"
+    },
+    "environment_config": {
+      "passed": true,
+      "details": "All required environment variables found"
+    },
+    "database_connection": {
+      "passed": true,
+      "details": "Connected successfully. Tables: ['frames', 'selfies']"
+    },
+    "import_config.database_config.DatabaseManager": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_image_processing.utils.path_utils.ProjectPaths": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_image_processing.utils.image_utils.ImageProcessor": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_image_processing.utils.glasses_dataset_analyzer.GlassesDatasetAnalyzer": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_image_processing.download.google_drive_downloader.GoogleDriveDatasetDownloader": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_models.hybrid_model.HybridVirtualTryOnModel": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_models.data_loaders.SelfiesDataset": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "import_demo.demo_tryon.VirtualTryOnDemo": {
+      "passed": true,
+      "details": "Import successful"
+    },
+    "pytorch_functionality": {
+      "passed": true,
+      "details": "CPU available: True\nCUDA available: False\nModel creation: Success"
+    },
+    "data_processing": {
+      "passed": true,
+      "details": "Image processing: OK, Face detection: 0 faces"
+    },
+    "disk_space": {
+      "passed": true,
+      "details": "273GB available"
+    }
+  },
+  "summary": {
+    "total_tests": 40,
+    "passed_tests": 40,
+    "failed_tests": 0,
+    "success_rate": 1.0,
+    "ready_for_workflow": true
+  }
+}

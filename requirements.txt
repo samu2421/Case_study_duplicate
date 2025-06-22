@@ -25,11 +25,16 @@ ipykernel>=6.25.0
 python-dotenv>=1.0.0
 tqdm>=4.65.0
 
-# Model specific
-segment-anything>=1.0
-# Note: SAM and DINOv2 models will be loaded via torch hub or transformers
+# Model specific (these will be downloaded automatically)
+# segment-anything>=1.0  # Will be loaded via torch.hub if available
+# DINOv2 will be loaded via torch.hub
 
 # Development and testing
 pytest>=7.4.0
 black>=23.7.0
 flake8>=6.0.0
+
+# Additional dependencies for new features
+zipfile36>=0.1.3  # Better zip file handling
+gdown>=4.7.1      # Google Drive downloads (alternative)
+scikit-learn>=1.3.0  # For additional ML utilities
