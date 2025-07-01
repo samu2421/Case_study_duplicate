@@ -14,12 +14,6 @@ import time
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from database.config import db_manager
-from image_processing.download.dataset_downloader import dataset_downloader
-from image_processing.preprocess.preprocess_selfies import selfie_preprocessor
-from image_processing.preprocess.preprocess_glasses import glasses_preprocessor
-from models.hybrid_model import get_hybrid_model
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -45,13 +39,18 @@ class PipelineRunner:
         try:
             logger.info("=== Stage 1: Database Setup ===")
             
+            # Import here to avoid circular imports
+            from database.config import db_manager
+            
             # Connect to database
             if not db_manager.connect():
                 logger.error("Failed to connect to database")
                 return False
             
-            # Create tables if they don't exist
-            db_manager.create_selfies_table()
+            # Setup database schema
+            if not db_manager.setup_database_schema():
+                logger.error("Failed to setup database schema")
+                return False
             
             logger.info("Database setup completed successfully")
             self.stages_completed.append("database_setup")
@@ -65,6 +64,10 @@ class PipelineRunner:
         """Download SCUT-FBP5500 dataset and store in database."""
         try:
             logger.info("=== Stage 2: Dataset Download and Storage ===")
+            
+            # Import here to avoid circular imports
+            from database.config import db_manager
+            from image_processing.download.dataset_downloader import dataset_downloader
             
             # Check if dataset already exists
             if skip_if_exists:
@@ -101,6 +104,10 @@ class PipelineRunner:
         try:
             logger.info("=== Stage 3: Selfie Preprocessing ===")
             
+            # Import here to avoid circular imports
+            from database.config import db_manager
+            from image_processing.preprocess.preprocess_selfies import selfie_preprocessor
+            
             # Check if already processed
             if not reprocess:
                 try:
@@ -135,6 +142,10 @@ class PipelineRunner:
         """Preprocess glasses images."""
         try:
             logger.info("=== Stage 4: Glasses Preprocessing ===")
+            
+            # Import here to avoid circular imports
+            from database.config import db_manager
+            from image_processing.preprocess.preprocess_glasses import glasses_preprocessor
             
             # Check if already processed
             if not reprocess:
@@ -171,6 +182,9 @@ class PipelineRunner:
         try:
             logger.info("=== Stage 5: Model Initialization ===")
             
+            # Import here to avoid circular imports
+            from models.hybrid_model import get_hybrid_model
+            
             # Load hybrid model (this will download SAM and DINOv2 if needed)
             hybrid_model = get_hybrid_model()
             
@@ -187,6 +201,10 @@ class PipelineRunner:
         try:
             logger.info("=== Stage 6: Data Analysis ===")
             
+            # Import here to avoid circular imports
+            from image_processing.preprocess.preprocess_selfies import selfie_preprocessor
+            from image_processing.preprocess.preprocess_glasses import glasses_preprocessor
+            
             # Analyze selfies dataset
             selfie_analysis = selfie_preprocessor.analyze_dataset_quality()
             self.results['selfie_analysis'] = selfie_analysis
@@ -195,20 +213,30 @@ class PipelineRunner:
             glasses_analysis = glasses_preprocessor.analyze_glasses_dataset()
             self.results['glasses_analysis'] = glasses_analysis
             
-            # Log analysis results
+            # Log analysis results (with safe formatting)
             logger.info("=== Selfie Dataset Analysis ===")
             if 'overall_statistics' in selfie_analysis:
                 stats = selfie_analysis['overall_statistics']
                 logger.info(f"Total images: {stats.get('total_images', 0)}")
                 logger.info(f"Images with faces: {stats.get('images_with_faces', 0)}")
-                logger.info(f"Average quality score: {stats.get('avg_quality_score', 0):.3f}")
+                avg_quality = stats.get('avg_quality_score', 0)
+                if avg_quality:
+                    logger.info(f"Average quality score: {avg_quality:.3f}")
+                else:
+                    logger.info("Average quality score: N/A")
             
             logger.info("=== Glasses Dataset Analysis ===")
             if 'overall_statistics' in glasses_analysis:
                 stats = glasses_analysis['overall_statistics']
                 logger.info(f"Total glasses: {stats.get('total_glasses', 0)}")
                 logger.info(f"With transparency: {stats.get('with_transparency', 0)}")
-                logger.info(f"Average transparency ratio: {stats.get('avg_transparency_ratio', 0):.3f}")
+                
+                # FIXED: Safe formatting for avg_transparency_ratio
+                avg_transparency = stats.get('avg_transparency_ratio')
+                if avg_transparency is not None:
+                    logger.info(f"Average transparency ratio: {avg_transparency:.3f}")
+                else:
+                    logger.info("Average transparency ratio: N/A")
             
             self.stages_completed.append("data_analysis")
             return True

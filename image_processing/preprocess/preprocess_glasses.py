@@ -1,6 +1,6 @@
 """
 Glasses preprocessing pipeline for the Virtual Glasses Try-On system.
-Handles background removal, transparency, and format conversion for glasses images.
+COMPLETELY FIXED VERSION - Resolves SQL parameter issues.
 """
 
 import cv2
@@ -13,10 +13,10 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image
 import io
+import sqlalchemy as sa
 
 from database.config import db_manager
 from image_processing.utils.image_utils import image_processor
-import sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
 
@@ -259,13 +259,14 @@ class GlassesPreprocessor:
                 
                 offset += batch_size
             
-            # Save processed glasses metadata
-            self._save_processed_glasses_metadata(processed_glasses)
+            # Save processed glasses metadata using the fixed method
+            success_count = self._save_processed_glasses_fixed(processed_glasses)
             
             results = {
                 'total_processed': total_processed,
                 'total_failed': total_failed,
-                'success_rate': total_processed / (total_processed + total_failed) if (total_processed + total_failed) > 0 else 0
+                'success_rate': total_processed / (total_processed + total_failed) if (total_processed + total_failed) > 0 else 0,
+                'saved_count': success_count
             }
             
             logger.info(f"Glasses preprocessing completed: {results}")
@@ -277,86 +278,68 @@ class GlassesPreprocessor:
             if "transaction" in str(e).lower() or "rollback" in str(e).lower():
                 logger.info("Attempting to reset database connection...")
                 db_manager.reset_connection()
-            return {'total_processed': 0, 'total_failed': 0, 'success_rate': 0}
+            return {'total_processed': 0, 'total_failed': 0, 'success_rate': 0, 'saved_count': 0}
     
-    def _save_processed_glasses_metadata(self, processed_glasses: List[Dict]):
-    """Save processed glasses metadata to database."""
-    try:
-        # Create processed glasses table if it doesn't exist
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS diffusion.processed_glasses (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            original_id UUID REFERENCES diffusion.frames(id),
-            title VARCHAR(255),
-            glasses_type VARCHAR(50),
-            transparency_ratio FLOAT DEFAULT 0.0,
-            has_transparency BOOLEAN DEFAULT FALSE,
-            processed_width INTEGER,
-            processed_height INTEGER,
-            image_data BYTEA,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(original_id)
-        );
-        """
-        
-        with db_manager.engine.connect() as conn:
-            try:
-                conn.execute(sa.text(create_table_sql))
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                logger.warning(f"Table creation warning: {e}")
-        
-        # Insert processed glasses data
-        success_count = 0
-        for glasses_data in processed_glasses:
-            try:
-                # Convert image to bytes
-                image_bytes = image_processor.image_to_bytes(glasses_data['processed_image'], 'PNG')
-                
-                # Use regular string (NOT f-string) - THIS IS THE KEY FIX
-                insert_sql = """
-                INSERT INTO diffusion.processed_glasses 
-                (original_id, title, glasses_type, transparency_ratio, has_transparency,
-                 processed_width, processed_height, image_data)
-                VALUES (%(original_id)s, %(title)s, %(glasses_type)s, %(transparency_ratio)s,
-                        %(has_transparency)s, %(width)s, %(height)s, %(image_data)s)
-                ON CONFLICT (original_id) DO UPDATE SET
-                    glasses_type = EXCLUDED.glasses_type,
-                    transparency_ratio = EXCLUDED.transparency_ratio,
-                    has_transparency = EXCLUDED.has_transparency,
-                    processed_width = EXCLUDED.processed_width,
-                    processed_height = EXCLUDED.processed_height,
-                    image_data = EXCLUDED.image_data;
-                """
-                
-                with db_manager.engine.connect() as conn:
-                    try:
-                        conn.execute(sa.text(insert_sql), {
-                            'original_id': glasses_data['id'],
-                            'title': glasses_data['title'],
-                            'glasses_type': glasses_data['glasses_type'],
-                            'transparency_ratio': glasses_data['transparency_ratio'],
-                            'has_transparency': glasses_data['has_transparency'],
-                            'width': glasses_data['processed_size'][1],
-                            'height': glasses_data['processed_size'][0],
-                            'image_data': image_bytes
-                        })
-                        conn.commit()
+    def _save_processed_glasses_fixed(self, processed_glasses: List[Dict]) -> int:
+        """Save processed glasses metadata to database - COMPLETELY FIXED VERSION."""
+        try:
+            # Create processed glasses table if it doesn't exist
+            create_table_sql = """
+            CREATE TABLE IF NOT EXISTS diffusion.processed_glasses (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                original_id UUID REFERENCES diffusion.frames(id),
+                title VARCHAR(255),
+                glasses_type VARCHAR(50),
+                transparency_ratio FLOAT DEFAULT 0.0,
+                has_transparency BOOLEAN DEFAULT FALSE,
+                processed_width INTEGER,
+                processed_height INTEGER,
+                image_data BYTEA,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(original_id)
+            );
+            """
+            
+            with db_manager.engine.connect() as conn:
+                try:
+                    conn.execute(sa.text(create_table_sql))
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
+                    logger.warning(f"Table creation warning: {e}")
+            
+            # Insert processed glasses data using the FIXED database method
+            success_count = 0
+            for glasses_data in processed_glasses:
+                try:
+                    # Convert image to bytes
+                    image_bytes = image_processor.image_to_bytes(glasses_data['processed_image'], 'PNG')
+                    
+                    # Use the FIXED database method with proper parameter syntax
+                    success = db_manager.insert_processed_glasses(
+                        original_id=glasses_data['id'],
+                        title=glasses_data['title'],
+                        glasses_type=glasses_data['glasses_type'],
+                        transparency_ratio=glasses_data['transparency_ratio'],
+                        has_transparency=glasses_data['has_transparency'],
+                        processed_width=glasses_data['processed_size'][1],
+                        processed_height=glasses_data['processed_size'][0],
+                        image_data=image_bytes
+                    )
+                    
+                    if success:
                         success_count += 1
-                    except Exception as e:
-                        conn.rollback()
-                        logger.warning(f"Failed to save processed glasses {glasses_data['id']}: {e}")
-                        continue
                         
-            except Exception as e:
-                logger.warning(f"Failed to process glasses data {glasses_data.get('id', 'unknown')}: {e}")
-                continue
-        
-        logger.info(f"Saved {success_count} processed glasses to database")
-        
-    except Exception as e:
-        logger.error(f"Failed to save processed glasses metadata: {e}")
+                except Exception as e:
+                    logger.warning(f"Failed to process glasses data {glasses_data.get('id', 'unknown')}: {e}")
+                    continue
+            
+            logger.info(f"Saved {success_count} processed glasses to database")
+            return success_count
+            
+        except Exception as e:
+            logger.error(f"Failed to save processed glasses metadata: {e}")
+            return 0
     
     def get_glasses_for_training(self, glasses_types: Optional[List[str]] = None) -> pd.DataFrame:
         """Get processed glasses data for training."""
@@ -364,8 +347,7 @@ class GlassesPreprocessor:
             if not db_manager.engine:
                 db_manager.connect()
             
-            # Build query
-            # Build query (use regular string)
+            # Build query using :parameter syntax
             base_query = """
             SELECT pg.id, pg.original_id, pg.title, pg.glasses_type, 
                    pg.transparency_ratio, pg.has_transparency
@@ -373,13 +355,16 @@ class GlassesPreprocessor:
             WHERE pg.has_transparency = true
             """
             
+            params = {}
             if glasses_types:
-                glasses_types_str = "', '".join(glasses_types)
-                base_query += f" AND pg.glasses_type IN ('{glasses_types_str}')"
+                placeholders = ', '.join([f':type_{i}' for i in range(len(glasses_types))])
+                base_query += f" AND pg.glasses_type IN ({placeholders})"
+                for i, glass_type in enumerate(glasses_types):
+                    params[f'type_{i}'] = glass_type
             
             base_query += " ORDER BY pg.transparency_ratio DESC;"
             
-            result = db_manager.execute_query(base_query)
+            result = db_manager.execute_query(base_query, params)
             logger.info(f"Retrieved {len(result)} glasses for training")
             return result
             
@@ -405,11 +390,10 @@ class GlassesPreprocessor:
             export_count = 0
             for _, row in tqdm(glasses_df.iterrows(), desc="Exporting glasses", total=len(glasses_df)):
                 try:
-                    # Get processed image data
-                    # Get processed image data (use regular string)
+                    # Get processed image data using :parameter syntax
                     query = """
                     SELECT image_data FROM diffusion.processed_glasses 
-                    WHERE id = %(glasses_id)s;
+                    WHERE id = :glasses_id;
                     """
                     
                     result = db_manager.execute_query(query, {'glasses_id': row['id']})
@@ -445,8 +429,7 @@ class GlassesPreprocessor:
             if not db_manager.engine:
                 db_manager.connect()
             
-            # Get comprehensive statistics
-            # Get comprehensive statistics (use regular string)
+            # Get comprehensive statistics using :parameter syntax
             analysis_query = """
             SELECT 
                 COUNT(*) as total_glasses,
@@ -459,7 +442,6 @@ class GlassesPreprocessor:
             stats = db_manager.execute_query(analysis_query)
             
             # Get type distribution
-            # Get type distribution (use regular string)
             type_query = """
             SELECT glasses_type, COUNT(*) as count
             FROM diffusion.processed_glasses
