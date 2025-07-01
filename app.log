@@ -1,0 +1,6 @@
+2025-06-03 23:10:25,828 - config - ERROR - ❌ Database connection failed: Not an executable object: 'SELECT 1'
+2025-06-03 23:11:19,189 - config - ERROR - ❌ Database connection failed: Not an executable object: 'SELECT 1'
+2025-06-03 23:17:25,281 - config - INFO - 🔧 Initializing database...
+2025-06-03 23:17:25,459 - config - INFO - ✅ Database connection successful
+2025-06-03 23:17:25,460 - config - ERROR - ❌ Error creating tables: Not an executable object: 'CREATE SCHEMA IF NOT EXISTS public'
+2025-06-03 23:17:25,460 - config - ERROR - ❌ Failed to create database tables

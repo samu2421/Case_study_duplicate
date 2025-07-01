@@ -1,40 +1,38 @@
 # Core dependencies
-numpy>=1.24.0
-pandas>=2.0.0
-Pillow>=10.0.0
-opencv-python>=4.8.0
-requests>=2.31.0
-
-# Database
-psycopg2-binary>=2.9.7
-sqlalchemy>=2.0.0
-
-# Machine Learning
 torch>=2.0.0
 torchvision>=0.15.0
 transformers>=4.30.0
 timm>=0.9.0
 
-# Visualization and Analysis
-matplotlib>=3.7.0
-seaborn>=0.12.0
-jupyter>=1.0.0
-ipykernel>=6.25.0
+# Computer Vision
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Database
+psycopg2-binary>=2.9.7
+sqlalchemy>=2.0.0
+pandas>=2.0.0
+
+# Image Processing
+albumentations>=1.3.0
+imageio>=2.31.0
 
 # Utilities
-python-dotenv>=1.0.0
+requests>=2.31.0
 tqdm>=4.65.0
+python-dotenv>=1.0.0
 
-# Model specific (these will be downloaded automatically)
-# segment-anything>=1.0  # Will be loaded via torch.hub if available
-# DINOv2 will be loaded via torch.hub
+# Jupyter for experiments
+jupyter>=1.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
 
-# Development and testing
-pytest>=7.4.0
-black>=23.7.0
-flake8>=6.0.0
+# Google Drive API (for dataset download)
+gdown>=4.7.0
 
-# Additional dependencies for new features
-zipfile36>=0.1.3  # Better zip file handling
-gdown>=4.7.1      # Google Drive downloads (alternative)
-scikit-learn>=1.3.0  # For additional ML utilities
+# Segment Anything Model
+segment-anything @ git+https://github.com/facebookresearch/segment-anything.git
+
+# Optional: For better performance
+accelerate>=0.21.0

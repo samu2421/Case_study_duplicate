@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  virtual-tryon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: virtual-glasses-tryon
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./demo/output:/app/demo/output
+      - ./logs:/app/logs
+      - model_cache:/app/.cache
+    environment:
+      - PYTHONPATH=/app
+      - TORCH_HOME=/app/.cache/torch
+      - HF_HOME=/app/.cache/huggingface
+    networks:
+      - tryon-network
+    depends_on:
+      - postgres-db
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        echo 'Starting Virtual Glasses Try-On System...' &&
+        python scripts/run_pipeline.py --verbose
+      "
+
+  # Optional: Local PostgreSQL database (if you want to run your own instead of the external one)
+  postgres-db:
+    image: postgres:15
+    container_name: tryon-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    networks:
+      - tryon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Optional: Jupyter notebook service for experiments
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tryon-jupyter
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - ./models:/app/models
+      - model_cache:/app/.cache
+    environment:
+      - PYTHONPATH=/app
+      - JUPYTER_ENABLE_LAB=yes
+    networks:
+      - tryon-network
+    ports:
+      - "8888:8888"
+    command: >
+      bash -c "
+        pip install jupyterlab &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+      "
+
+  # Optional: Web interface for demo (future implementation)
+  web-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tryon-web-demo
+    volumes:
+      - ./demo:/app/demo
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - tryon-network
+    ports:
+      - "8000:8000"
+    depends_on:
+      - virtual-tryon
+    command: >
+      bash -c "
+        echo 'Web demo service placeholder' &&
+        python -m http.server 8000
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+  model_cache:
+    driver: local
+
+networks:
+  tryon-network:
+    driver: bridge
